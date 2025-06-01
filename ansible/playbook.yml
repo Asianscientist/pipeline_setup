@@ -1,0 +1,105 @@
+---
+- name: Configure FastAPi server
+  hosts: all
+  become: true
+  vars:
+    docker_image: samandarshoyim/soccerboard-app
+    app_port: 8081
+
+  tasks:
+    - name: Install Python and Docker dependencies
+      apt:
+        name: ['python3-pip', "docker.io"]
+        state: present
+      
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull docker image
+      docker_image:
+        name: "{{docker_image}}"
+        source: pull
+
+    - name: Run FastAPI container
+      docker_container:
+        name: fastapi_app
+        image: "{{docker_image}}"
+        ports: "80:{{app_port}}"
+        restart_policy: unless-stopped
+        detach: yes
+
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: latest
+        update_cache: yes
+
+    - name: Add user to docker group
+      user:
+        name: "{{ user }}"
+        groups: docker
+        append: yes
+
+    - name: Pull docker  image
+      docker_image:
+        name: "{{docker_image}}"
+        source: pull
+
+    - name: Run FastAPI container
+      docker_container:
+        name: fastapi_app
+        image: "{{ docker_image }}"
+        ports: 
+          - "{{ app_port }}:{{ app_port }}"  
+        restart_policy: unless-stopped
+        detach: yes
+
+    - name: install nginx
+      apt:
+        name: nginx
+        state: latest
+        update_cache: yes
+
+    - name: Remove default configuration
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Create nginx config directory
+      file:
+        path: /etc/nginx/conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Configure nginx as reverse proxy
+      template:
+        src: ./fastapi-proxy.conf.j2  
+        dest: /etc/nginx/conf.d/fastapi-proxy.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload nginx
+
+    - name: Test nginx configuration
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+      notify: Reload nginx
+
+    - name: Ensure nginx is running
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+      when: nginx_test is succeeded
+
+  handlers:
+    - name: Reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
