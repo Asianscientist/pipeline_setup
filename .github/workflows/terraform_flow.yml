@@ -1,0 +1,35 @@
+name: Terraform
+
+on:
+  workflow_dispatch:  # manual trigger
+  push:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terrraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: ./terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+
+        
+
+        
+      
