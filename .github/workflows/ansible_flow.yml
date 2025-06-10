@@ -1,40 +1,38 @@
-name: Ansible
+name: Deploy FastAPI with Ansible
+
 on:
-  workflow_dispatch:
+  workflow_dispatch:  
   push:
-    paths:
-      - 'ansible/**'
-      - '.github/workflows/ansible_flow.yml'
+    branches:
+      - main
 
 jobs:
-  ansible:
+  deploy:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ansible  
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
 
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible
+    - name: Write SSH key
+      run: |
+        echo "${{ secrets.EC2_PRV_KEY }}" > ansible_key
+        chmod 600 ansible_key
 
-      - name: Add SSH private key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets. EC2_PRV_KEY  }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+    - name: Create inventory file
+      run: |
+        echo "[fastapi]" > inventory
+        echo "${{ secrets.ANSIBLE_HOST }} ansible_user=ubuntu ansible_ssh_private_key_file=./ansible_key" >> inventory
 
-      - name: Run Ansible Playbook
-        run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: False
-          ANSIBLE_REMOTE_USER: ubuntu
-          ANSIBLE_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
-
-          
-
-          
+    - name: Run Ansible Playbook
+      run: |
+        ansible-playbook -i inventory ansible/site.yml
