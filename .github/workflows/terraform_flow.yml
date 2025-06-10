@@ -21,8 +21,12 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan.binary
+        working-directory: ./terraform
+
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply tfplan.binary
         working-directory: ./terraform
 
         
