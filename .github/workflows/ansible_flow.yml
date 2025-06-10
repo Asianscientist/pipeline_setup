@@ -28,10 +28,10 @@ jobs:
         echo "${{ secrets.EC2_PRV_KEY }}" > ansible_key
         chmod 600 ansible_key
 
-    # - name: Create inventory file
-    #   run: |
-    #     echo "[fastapi]" > inventory
-    #     echo "${{ secrets.ANSIBLE_HOST }} ansible_user=ubuntu ansible_ssh_private_key_file=./ansible_key" >> inventory
+    - name: Create Ansible inventory
+      run: |
+        echo "[web_servers]" > inventory
+        echo "${{ secrets.ANSIBLE_HOST }} ansible_user=ubuntu ansible_ssh_private_key_file=./ansible_key" >> inventory
 
     - name: Run Ansible Playbook
       run: |
