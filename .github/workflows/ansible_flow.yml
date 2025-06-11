@@ -32,10 +32,10 @@ jobs:
     #   run: |
     #     echo "[web_servers]" > inventory
     #     echo "${{ secrets.ANSIBLE_HOST }} ansible_user=ubuntu ansible_ssh_private_key_file=./ansible_key" >> inventory
-    - name: Add EC2 to known_hosts
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.KNOWN_HOST_ENTRY }}" > ~/.ssh/known_hosts
+    # - name: Add EC2 to known_hosts
+    #   run: |
+    #     mkdir -p ~/.ssh
+    #     echo "${{ secrets.KNOWN_HOST_ENTRY }}" > ~/.ssh/known_hosts
 
 
     - name: Run Ansible Playbook
